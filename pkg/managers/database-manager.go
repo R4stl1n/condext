@@ -166,3 +166,22 @@ func (databaseManager *DatabaseManager) GetCondextConfigModel() (dto.CondextConf
 
 	return condextConfigModel, nil
 }
+
+func (databaseManager *DatabaseManager) UpdateCondextConfig(updatedConfigModel dto.CondextConfigModel) (dto.CondextConfigModel, error) {
+
+	configModel, configModelError := databaseManager.GetCondextConfigModel()
+
+	if configModelError != nil {
+		return dto.CondextConfigModel{}, configModelError
+	}
+
+	configModel.Active = updatedConfigModel.Active
+	configModel.BalanceThreshold = updatedConfigModel.BalanceThreshold
+	configModel.OrderTimeout = updatedConfigModel.OrderTimeout
+	configModel.RebalanceFrequency = updatedConfigModel.RebalanceFrequency
+	configModel.StartingBalance = updatedConfigModel.StartingBalance
+
+	databaseManager.gormClient.Save(&configModel)
+
+	return configModel, nil
+}

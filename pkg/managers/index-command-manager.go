@@ -238,4 +238,11 @@ func (indexCommandManager *IndexCommandManager) GenerateIndexCommand(c *ishell.C
 		}
 	}
 
+	condextConfigModel.Active = true
+
+	_, updateError := indexCommandManager.databaseMgr.UpdateCondextConfig(condextConfigModel)
+
+	if updateError != nil {
+		logrus.Error(updateError.Error())
+	}
 }
