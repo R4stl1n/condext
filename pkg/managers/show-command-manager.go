@@ -94,7 +94,7 @@ func (showCommandManager *ShowCommandManager) ShowConfig(c *ishell.Context) {
 	data := [][]string{
 		{
 			strconv.FormatBool(configModel.Active),
-			decimal.NewFromFloat(configModel.BalanceThreshold).String(),
+			decimal.NewFromFloat(configModel.ReBalanceThreshold).String(),
 			decimal.NewFromInt(configModel.OrderTimeout).String(),
 			decimal.NewFromInt(configModel.RebalanceFrequency).String(),
 		},

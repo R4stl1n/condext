@@ -106,10 +106,10 @@ func (indexCommandManager *IndexCommandManager) AddSymbolToIndexCommand(c *ishel
 		}
 	}
 
-	totalFreePercentage := (decimal.NewFromFloat(100.0).Sub(totalPercentageLocked)).Sub(totalPercentageUnlocked).Round(3)
+	totalFreePercentage := (decimal.NewFromFloat(100.0).Sub(totalPercentageLocked)).Sub(totalPercentageUnlocked).Round(2)
 
 	// Check if we have enough free percentage
-	if totalFreePercentage.GreaterThan(symbolPercentage) {
+	if totalFreePercentage.GreaterThanOrEqual(symbolPercentage) {
 		// We have enough total free we can go ahead and move forward
 		_, createIndexSymbolError := indexCommandManager.databaseMgr.CreateIndexSymbolModel(dto.IndexedSymbolModel{
 			Symbol:            symbolToAdd,
@@ -134,14 +134,14 @@ func (indexCommandManager *IndexCommandManager) AddSymbolToIndexCommand(c *ishel
 
 	// Remove the percentage from the other coins
 
-	percentageToRemove := symbolPercentage.Div(totalUnlockedSymbolsCount).Round(3)
+	percentageToRemove := symbolPercentage.Div(totalUnlockedSymbolsCount).Round(2)
 	_ = symbolLocked
 
 	for _, indexedSymbol := range indexedSymbols {
 
 		if indexedSymbol.Locked == false {
 
-			indexedSymbol.DesiredPercentage, _ = decimal.NewFromFloat(indexedSymbol.DesiredPercentage).Sub(percentageToRemove).Round(3).Float64()
+			indexedSymbol.DesiredPercentage, _ = decimal.NewFromFloat(indexedSymbol.DesiredPercentage).Sub(percentageToRemove).Round(2).Float64()
 
 			_, updateError := indexCommandManager.databaseMgr.UpdateIndexedSymbolModel(indexedSymbol)
 
@@ -169,11 +169,15 @@ func (indexCommandManager *IndexCommandManager) AddSymbolToIndexCommand(c *ishel
 }
 
 func (indexCommandManager *IndexCommandManager) StartIndexCommand(c *ishell.Context) {
+
+
 	rebalanceStartError := indexCommandManager.rebalanceMgr.StartRebalanceProcess()
 
 	if rebalanceStartError != nil {
 		logrus.Error(rebalanceStartError.Error())
 	}
+
+	logrus.Info("Rebalance process initiated")
 }
 
 func (indexCommandManager *IndexCommandManager) GenerateIndexCommand(c *ishell.Context) {

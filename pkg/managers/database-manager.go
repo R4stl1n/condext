@@ -113,9 +113,7 @@ func (databaseManager *DatabaseManager) UpdateIndexedSymbolModel(updatedIndexedS
 	indexedSymbolModel.CurrentPercentage = updatedIndexedSymbolModel.CurrentPercentage
 	indexedSymbolModel.Locked = updatedIndexedSymbolModel.Locked
 	indexedSymbolModel.CurrentPrice = updatedIndexedSymbolModel.CurrentPrice
-	indexedSymbolModel.AmountFromTarget = updatedIndexedSymbolModel.AmountFromTarget
 	indexedSymbolModel.Amount = updatedIndexedSymbolModel.Amount
-	indexedSymbolModel.LastOrderId = updatedIndexedSymbolModel.LastOrderId
 
 	databaseManager.gormClient.Save(&indexedSymbolModel)
 
@@ -130,25 +128,16 @@ func (databaseManager *DatabaseManager) CreateCondextConfigAndFirstSymbolModel()
 		condextConfigModel := dto.CondextConfigModel{}
 
 		condextConfigModel.Active = false
-		condextConfigModel.BalanceThreshold = 1
+		condextConfigModel.ReBalanceThreshold = 1
 		condextConfigModel.OrderTimeout = 10
 		condextConfigModel.RebalanceFrequency = 60
-		condextConfigModel.StartingBalance = 100000
-
+		condextConfigModel.StartingBalance = 50000
 		createError := databaseManager.gormClient.Create(&condextConfigModel).Error
 
 		if createError != nil {
 			return createError
 		}
 
-		_, indexSymbolCreateError := databaseManager.CreateIndexSymbolModel(dto.IndexedSymbolModel{
-			Symbol:            "USD",
-			DesiredPercentage: 100,
-		})
-
-		if indexSymbolCreateError != nil {
-			return indexSymbolCreateError
-		}
 	}
 
 	return nil
@@ -176,7 +165,7 @@ func (databaseManager *DatabaseManager) UpdateCondextConfig(updatedConfigModel d
 	}
 
 	configModel.Active = updatedConfigModel.Active
-	configModel.BalanceThreshold = updatedConfigModel.BalanceThreshold
+	configModel.ReBalanceThreshold = updatedConfigModel.ReBalanceThreshold
 	configModel.OrderTimeout = updatedConfigModel.OrderTimeout
 	configModel.RebalanceFrequency = updatedConfigModel.RebalanceFrequency
 	configModel.StartingBalance = updatedConfigModel.StartingBalance

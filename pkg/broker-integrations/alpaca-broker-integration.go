@@ -67,6 +67,7 @@ func (alpacaBrokerIntegration *AlpacaBrokerIntegration) GetAccountValue() (float
 		return 0, accountError
 	}
 
+
 	accountValueConv, _ := accountInfo.PortfolioValue.Float64()
 
 	return accountValueConv, nil

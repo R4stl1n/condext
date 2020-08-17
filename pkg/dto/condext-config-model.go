@@ -6,8 +6,9 @@ type CondextConfigModel struct {
 	gorm.Model
 
 	Active             bool
-	BalanceThreshold   float64
+	ReBalanceThreshold float64
 	OrderTimeout       int64
 	RebalanceFrequency int64
 	StartingBalance    float64
+	FloatingPercentage float64
 }

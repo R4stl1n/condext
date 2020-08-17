@@ -12,6 +12,4 @@ type IndexedSymbolModel struct {
 	CurrentPercentage float64
 	CurrentPrice      float64
 	Amount            int64
-	AmountFromTarget  int64
-	LastOrderId       string
 }
