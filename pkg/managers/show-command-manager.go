@@ -38,13 +38,13 @@ func (showCommandManager *ShowCommandManager) ShowIndex(c *ishell.Context) {
 	for _, element := range allIndexedSymbols {
 		currentValue := decimal.NewFromInt(element.Amount).Mul(decimal.NewFromFloat(element.CurrentPrice))
 		data = append(data, []string{element.Symbol, decimal.NewFromInt(element.Amount).String(),
-			currentValue.String(), strconv.FormatBool(element.Locked),
+			currentValue.String(), decimal.NewFromFloat(element.CurrentPrice).String(), strconv.FormatBool(element.Locked),
 			decimal.NewFromFloat(element.DesiredPercentage).String(), decimal.NewFromFloat(element.CurrentPercentage).String()})
 	}
 
 	fmt.Println()
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Symbol", "Amount", "Current USD Value", "Locked", "Desired %", "Current %"})
+	table.SetHeader([]string{"Symbol", "Amount", "Current USD Value", "Current Price", "Locked", "Desired %", "Current %"})
 	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 	table.SetCenterSeparator("|")
 	table.AppendBulk(data) // Add Bulk Data
@@ -96,7 +96,7 @@ func (showCommandManager *ShowCommandManager) ShowConfig(c *ishell.Context) {
 			strconv.FormatBool(configModel.Active),
 			decimal.NewFromFloat(configModel.BalanceThreshold).String(),
 			decimal.NewFromInt(configModel.OrderTimeout).String(),
-			decimal.NewFromFloat(configModel.ReBalanceTickSetting).String(),
+			decimal.NewFromInt(configModel.RebalanceFrequency).String(),
 		},
 	}
 

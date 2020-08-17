@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
+	"github.com/shopspring/decimal"
 )
 
 type AlpacaBrokerIntegration struct {
@@ -69,6 +70,7 @@ func (alpacaBrokerIntegration *AlpacaBrokerIntegration) GetAccountValue() (float
 	return accountValueConv, nil
 
 }
+
 func (alpacaBrokerIntegration *AlpacaBrokerIntegration) CheckIfSymbolIsValid(symbol string) (bool, error) {
 	alpacaClient := alpaca.NewClient(&common.APIKey{
 		ID:           alpacaBrokerIntegration.AccessKey,
@@ -83,4 +85,22 @@ func (alpacaBrokerIntegration *AlpacaBrokerIntegration) CheckIfSymbolIsValid(sym
 	}
 
 	return true, nil
+}
+
+func (alpacaBrokerIntegration *AlpacaBrokerIntegration) GetSymbolQuotePrice(symbol string) (float64, error) {
+	alpacaClient := alpaca.NewClient(&common.APIKey{
+		ID:           alpacaBrokerIntegration.AccessKey,
+		Secret:       alpacaBrokerIntegration.AccessSecret,
+		PolygonKeyID: alpacaBrokerIntegration.AccessKey,
+	})
+
+	quote, quoteError := alpacaClient.GetLastQuote(symbol)
+
+	if quoteError != nil {
+		return 0.0, quoteError
+	}
+
+	midQuoteValue, _ := decimal.NewFromFloat32(quote.Last.BidPrice).Add(decimal.NewFromFloat32(quote.Last.AskPrice)).Div(decimal.NewFromInt(2)).Round(3).Float64()
+
+	return midQuoteValue, nil
 }

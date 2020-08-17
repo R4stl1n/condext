@@ -58,7 +58,7 @@ func main() {
 	}
 
 	// Create the config model if missing
-	configModelError := databaseManager.CreateCondextConfigModel()
+	configModelError := databaseManager.CreateCondextConfigAndFirstSymbolModel()
 
 	if configModelError != nil {
 		logrus.Error(configModelError)
@@ -98,9 +98,12 @@ func main() {
 		return
 	}
 
+	// Create the rebalance manager
+	rebalanceManager := managers.CreateRebalanceManager(databaseManager, brokerIntegration)
+
 	// Create the command manager
 	showCommandManager := managers.CreateShowCommandManager(databaseManager, brokerIntegration)
-	indexCommandManager := managers.CreateIndexCommandManager(databaseManager, brokerIntegration)
+	indexCommandManager := managers.CreateIndexCommandManager(databaseManager, rebalanceManager, brokerIntegration)
 
 	serviceManager := managers.CreateServiceManager(&configStruct, databaseManager, showCommandManager, indexCommandManager)
 

@@ -11,14 +11,17 @@ import (
 )
 
 type IndexCommandManager struct {
-	databaseMgr       *DatabaseManager
+	databaseMgr  *DatabaseManager
+	rebalanceMgr *RebalanceManager
+
 	brokerIntegration *broker_integrations.BrokerIntegrationInterface
 }
 
-func CreateIndexCommandManager(databaseManager *DatabaseManager, selectedBrokerIntegration broker_integrations.BrokerIntegrationInterface) *IndexCommandManager {
+func CreateIndexCommandManager(databaseManager *DatabaseManager, rebalanceManager *RebalanceManager, selectedBrokerIntegration broker_integrations.BrokerIntegrationInterface) *IndexCommandManager {
 
 	return &IndexCommandManager{
 		databaseMgr:       databaseManager,
+		rebalanceMgr:      rebalanceManager,
 		brokerIntegration: &selectedBrokerIntegration,
 	}
 }
@@ -72,6 +75,14 @@ func (indexCommandManager *IndexCommandManager) AddSymbolToIndexCommand(c *ishel
 		return
 	}
 
+	// Now we need to get the quote price
+	symbolQuotePrice, symbolQuotePriceError := (*indexCommandManager.brokerIntegration).GetSymbolQuotePrice(symbolToAdd)
+
+	if symbolQuotePriceError != nil {
+		logrus.Error(symbolQuotePriceError.Error())
+		return
+	}
+
 	// First we need to grab all the current indexed symbols
 	indexedSymbols, indexedSymbolsError := indexCommandManager.databaseMgr.GetAllIndexedSymbols()
 
@@ -122,17 +133,20 @@ func (indexCommandManager *IndexCommandManager) AddSymbolToIndexCommand(c *ishel
 
 	// Remove the percentage from the other coins
 
-	percentageToRemove := symbolPercentage.Div(decimal.NewFromInt(int64(len(indexedSymbols)))).Round(3)
+	percentageToRemove := symbolPercentage.Div(totalUnlockedSymbolsCount).Round(3)
 	_ = symbolLocked
 
 	for _, indexedSymbol := range indexedSymbols {
 
-		indexedSymbol.DesiredPercentage, _ = decimal.NewFromFloat(indexedSymbol.DesiredPercentage).Sub(percentageToRemove).Round(3).Float64()
+		if indexedSymbol.Locked == false {
 
-		_, updateError := indexCommandManager.databaseMgr.UpdateIndexedSymbolModel(indexedSymbol)
+			indexedSymbol.DesiredPercentage, _ = decimal.NewFromFloat(indexedSymbol.DesiredPercentage).Sub(percentageToRemove).Round(3).Float64()
 
-		if updateError != nil {
-			logrus.Error(updateError.Error())
+			_, updateError := indexCommandManager.databaseMgr.UpdateIndexedSymbolModel(indexedSymbol)
+
+			if updateError != nil {
+				logrus.Error(updateError.Error())
+			}
 		}
 	}
 
@@ -140,6 +154,7 @@ func (indexCommandManager *IndexCommandManager) AddSymbolToIndexCommand(c *ishel
 	_, createIndexSymbolError := indexCommandManager.databaseMgr.CreateIndexSymbolModel(dto.IndexedSymbolModel{
 		Symbol:            symbolToAdd,
 		Locked:            symbolLocked,
+		CurrentPrice:      symbolQuotePrice,
 		DesiredPercentage: symbolPercentageConverted,
 	})
 
@@ -150,4 +165,12 @@ func (indexCommandManager *IndexCommandManager) AddSymbolToIndexCommand(c *ishel
 
 	logrus.Info("Symbol " + symbolToAdd + " added to index")
 
+}
+
+func (indexCommandManager *IndexCommandManager) StartIndexCommand(c *ishell.Context) {
+	rebalanceStartError := indexCommandManager.rebalanceMgr.StartRebalanceProcess()
+
+	if rebalanceStartError != nil {
+		logrus.Error(rebalanceStartError.Error())
+	}
 }

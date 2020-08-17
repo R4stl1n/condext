@@ -103,7 +103,7 @@ func (databaseManager *DatabaseManager) UpdateIndexedSymbolModel(updatedIndexedS
 
 	indexedSymbolModel := dto.IndexedSymbolModel{}
 
-	findError := databaseManager.gormClient.Find(&indexedSymbolModel, "uuid = ?", indexedSymbolModel.UUID).Error
+	findError := databaseManager.gormClient.Find(&indexedSymbolModel, "uuid = ?", updatedIndexedSymbolModel.UUID).Error
 
 	if findError != nil {
 		return indexedSymbolModel, findError
@@ -116,10 +116,12 @@ func (databaseManager *DatabaseManager) UpdateIndexedSymbolModel(updatedIndexedS
 	indexedSymbolModel.AmountFromTarget = updatedIndexedSymbolModel.AmountFromTarget
 	indexedSymbolModel.LastOrderId = updatedIndexedSymbolModel.LastOrderId
 
+	databaseManager.gormClient.Save(&indexedSymbolModel)
+
 	return indexedSymbolModel, nil
 }
 
-func (databaseManager *DatabaseManager) CreateCondextConfigModel() error {
+func (databaseManager *DatabaseManager) CreateCondextConfigAndFirstSymbolModel() error {
 
 	_, configModelError := databaseManager.GetCondextConfigModel()
 
@@ -128,8 +130,8 @@ func (databaseManager *DatabaseManager) CreateCondextConfigModel() error {
 
 		condextConfigModel.Active = false
 		condextConfigModel.BalanceThreshold = 1
-		condextConfigModel.OrderTimeout = 60
-		condextConfigModel.ReBalanceTickSetting = 10
+		condextConfigModel.OrderTimeout = 10
+		condextConfigModel.RebalanceFrequency = 60
 
 		createError := databaseManager.gormClient.Create(&condextConfigModel).Error
 
@@ -137,6 +139,14 @@ func (databaseManager *DatabaseManager) CreateCondextConfigModel() error {
 			return createError
 		}
 
+		_, indexSymbolCreateError := databaseManager.CreateIndexSymbolModel(dto.IndexedSymbolModel{
+			Symbol:            "USD",
+			DesiredPercentage: 100,
+		})
+
+		if indexSymbolCreateError != nil {
+			return indexSymbolCreateError
+		}
 	}
 
 
