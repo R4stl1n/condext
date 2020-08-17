@@ -114,6 +114,7 @@ func (databaseManager *DatabaseManager) UpdateIndexedSymbolModel(updatedIndexedS
 	indexedSymbolModel.Locked = updatedIndexedSymbolModel.Locked
 	indexedSymbolModel.CurrentPrice = updatedIndexedSymbolModel.CurrentPrice
 	indexedSymbolModel.AmountFromTarget = updatedIndexedSymbolModel.AmountFromTarget
+	indexedSymbolModel.Amount = updatedIndexedSymbolModel.Amount
 	indexedSymbolModel.LastOrderId = updatedIndexedSymbolModel.LastOrderId
 
 	databaseManager.gormClient.Save(&indexedSymbolModel)
@@ -132,6 +133,7 @@ func (databaseManager *DatabaseManager) CreateCondextConfigAndFirstSymbolModel()
 		condextConfigModel.BalanceThreshold = 1
 		condextConfigModel.OrderTimeout = 10
 		condextConfigModel.RebalanceFrequency = 60
+		condextConfigModel.StartingBalance = 100000
 
 		createError := databaseManager.gormClient.Create(&condextConfigModel).Error
 
@@ -149,8 +151,7 @@ func (databaseManager *DatabaseManager) CreateCondextConfigAndFirstSymbolModel()
 		}
 	}
 
-
-	return  nil
+	return nil
 }
 
 func (databaseManager *DatabaseManager) GetCondextConfigModel() (dto.CondextConfigModel, error) {

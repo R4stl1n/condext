@@ -9,5 +9,5 @@ type CondextConfigModel struct {
 	BalanceThreshold   float64
 	OrderTimeout       int64
 	RebalanceFrequency int64
-	TotalAmountManaged int64
+	StartingBalance    float64
 }

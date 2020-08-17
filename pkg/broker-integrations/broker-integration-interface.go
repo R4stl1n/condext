@@ -7,4 +7,7 @@ type BrokerIntegrationInterface interface {
 	GetAccountValue() (float64, error)
 	GetSymbolQuotePrice(symbol string) (float64, error)
 	CheckIfSymbolIsValid(symbol string) (bool, error)
+
+	FulFillMarketOrderBuy(symbol string, amount int64) error
+	FulFillMarketOrderSell(symbol string, amount int64) error
 }

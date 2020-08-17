@@ -44,7 +44,7 @@ func (serviceManager *ServiceManager) Run() {
 	shell.AddCmd(&ishell.Cmd{
 		Name: "index_gen",
 		Help: "Initial generation of the index",
-		Func: serviceManager.indexCommandManager.AddSymbolToIndexCommand,
+		Func: serviceManager.indexCommandManager.GenerateIndexCommand,
 	})
 
 	shell.AddCmd(&ishell.Cmd{
@@ -52,7 +52,6 @@ func (serviceManager *ServiceManager) Run() {
 		Help: "Starts the rebalance background process",
 		Func: serviceManager.indexCommandManager.StartIndexCommand,
 	})
-
 
 	shell.AddCmd(&ishell.Cmd{
 		Name: "show_stats",

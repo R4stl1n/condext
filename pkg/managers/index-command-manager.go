@@ -3,6 +3,7 @@ package managers
 import (
 	"github.com/r4stl1n/condext/pkg/broker-integrations"
 	"github.com/r4stl1n/condext/pkg/dto"
+	"github.com/r4stl1n/condext/pkg/util"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/abiosoft/ishell.v2"
@@ -173,4 +174,68 @@ func (indexCommandManager *IndexCommandManager) StartIndexCommand(c *ishell.Cont
 	if rebalanceStartError != nil {
 		logrus.Error(rebalanceStartError.Error())
 	}
+}
+
+func (indexCommandManager *IndexCommandManager) GenerateIndexCommand(c *ishell.Context) {
+
+	accountBalance, accountBalanceError := (*indexCommandManager.brokerIntegration).GetAccountValue()
+
+	if accountBalanceError != nil {
+		logrus.Error(accountBalanceError.Error())
+		return
+	}
+
+	condextConfigModel, condextConfigModelError := indexCommandManager.databaseMgr.GetCondextConfigModel()
+
+	if condextConfigModelError != nil {
+		logrus.Error(condextConfigModelError.Error())
+		return
+	}
+
+	if accountBalance < condextConfigModel.StartingBalance {
+		logrus.Error("The balance in the account is lower than the starting balance")
+		return
+	}
+
+	// Get all the indexed symbols
+	indexedSymbols, indexedSymbolsError := indexCommandManager.databaseMgr.GetAllIndexedSymbols()
+
+	if indexedSymbolsError != nil {
+		logrus.Error(indexedSymbolsError.Error())
+		return
+	}
+
+	for _, element := range indexedSymbols {
+		if element.Symbol != "USD" {
+
+			// We get the latest quote before processing
+			symbolQuote, symbolQuoteError := (*indexCommandManager.brokerIntegration).GetSymbolQuotePrice(element.Symbol)
+
+			if symbolQuoteError != nil {
+				logrus.Error(symbolQuoteError.Error())
+				continue
+			}
+
+			usdPercentageValue := util.GetPercentage(condextConfigModel.StartingBalance, element.DesiredPercentage)
+			amountToBuy := decimal.NewFromFloat(usdPercentageValue).Div(decimal.NewFromFloat(symbolQuote)).IntPart()
+
+			buyError := (*indexCommandManager.brokerIntegration).FulFillMarketOrderBuy(element.Symbol, amountToBuy)
+
+			if buyError != nil {
+				logrus.Error(buyError.Error())
+				continue
+			}
+
+			element.CurrentPrice = symbolQuote
+			element.Amount = amountToBuy
+			element.CurrentPercentage = element.DesiredPercentage
+
+			_, updateSymbolError := indexCommandManager.databaseMgr.UpdateIndexedSymbolModel(element)
+
+			if updateSymbolError != nil {
+				logrus.Error(updateSymbolError.Error())
+			}
+		}
+	}
+
 }
